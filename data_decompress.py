@@ -20,7 +20,7 @@ Json_list = {
 }
 
 # data文件夹存放转换后的.png文件
-data_dir = 'F:/DeskTop/科研/实验/实验代码/dataset/CASIA-AHCDB/'
+data_dir = 'dataset/CASIA-AHCDB/'
 # 路径为存放数据集解压后的.gntx文件
 #train_data_dir = os.path.join(data_dir, 'style1_basic_train_part1')
 train_data_dir = os.path.join(data_dir, 'style1_basic_test_part')
