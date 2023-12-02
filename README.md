@@ -7,6 +7,9 @@ CASIA-AHCDB压缩在这个 [CASIA-AHCDB-load](https://github.com/detachment8/CAS
 """
     CASIA-AHCDB 数据集解压缩
 """
+"""
+    CASIA-AHCDB 数据集解压缩
+"""
 import os
 import numpy as np
 from PIL import Image
@@ -73,10 +76,10 @@ def gntx_to_png():
     char_undict = {}
     char_set = set()
     files = os.listdir(dataset_dir)
-    classname = 'train'
     for path in files:
-        if classname not in path:
-            classname = 'test'
+        classname = 'train' if 'train' in path else 'test'
+        classdir = os.path.join(dataset_dir, classname)
+        print(classdir)
         data_dir = os.path.join(dataset_dir, path)
         counter = 0
         for image, Unicode in read_from_gntx_dir(gntx_dir=data_dir):
@@ -97,7 +100,7 @@ def gntx_to_png():
             
             im = Image.fromarray(image)
             # 存放图片的路径
-            img_dir = os.path.join(dataset_dir, classname) + '/' + Unicode_unicode
+            img_dir = classdir + '/' + unicode
 
             if not os.path.exists(img_dir):
                 os.makedirs(img_dir)
@@ -106,7 +109,7 @@ def gntx_to_png():
                 print("counter=", counter)
             counter += 1
         
-        print(classname + "counter = " + str(counter))
+        print(classname + " counter = " + str(counter))
         print(classname + ' transformation finished ...')
         
     char_list = list(char_set)
@@ -132,4 +135,3 @@ def change_dir_name(data_dir):
 
 # change_dir_name(os.path.join(data_dir,'style1_basic_train_part1'))
 # change_dir_name(os.path.join(data_dir,'style1_basic_test'))
-```python
