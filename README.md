@@ -97,7 +97,7 @@ def gntx_to_png():
             
             im = Image.fromarray(image)
             # 存放图片的路径
-            img_dir = os.path.join(dataset_dir, classname) + '/' + unicode
+            img_dir = os.path.join(dataset_dir, classname) + '/' + Unicode_unicode
 
             if not os.path.exists(img_dir):
                 os.makedirs(img_dir)
