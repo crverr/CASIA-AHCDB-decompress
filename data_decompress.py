@@ -1,4 +1,6 @@
-# 用于CASIA-AHCDB 数据集解压缩
+"""
+    CASIA-AHCDB 数据集解压缩
+"""
 import os
 import numpy as np
 from PIL import Image
@@ -19,14 +21,19 @@ Json_list = {
     '25609':'𥘉', '25677':'𥙷', '25807':'𥠇', '28427':'𨐧', '29516':'𩔖', '2b826': '𫠦'
 }
 
-# data文件夹存放转换后的.png文件
-data_dir = 'dataset/CASIA-AHCDB/'
 # 路径为存放数据集解压后的.gntx文件
-#train_data_dir = os.path.join(data_dir, 'style1_basic_train_part1')
-train_data_dir = os.path.join(data_dir, 'style1_basic_test_part')
+dataset_dir = '../data/datasets/CASIA-AHCDB/'
+
+# CASIA数据集 将.gtnx后缀格式文件转化为png
+# 保存unicode和中文的字典文件
+def save_file(data, name):
+    import pickle
+    f = open(os.path.join(dataset_dir,name), 'wb')
+    pickle.dump(data, f)
+    f.close()
 
 # 读取gntx目录
-def read_from_gntx_dir(gntx_dir=train_data_dir):
+def read_from_gntx_dir(gntx_dir):
     def one_file(f):
         #头大小为12
         header_size = 12
@@ -59,67 +66,63 @@ def read_from_gntx_dir(gntx_dir=train_data_dir):
 def gntx_to_png():
     char_undict = {}
     char_set = set()
-    for _, Unicode in read_from_gntx_dir(gntx_dir=train_data_dir):
-        # 转化为16进制再转化为unicode字符
-        # Unicode在这里是int型
-        # if(Unicode<0x1000 or Unicode>0xffff):
-        #     continue
-        temp = "\\u" + hex(Unicode)[2:]
-        unicode = hex(Unicode)[2:]  # 十六进制
-        if len(unicode) == 4:
-            Unicode_unicode = temp.encode('utf-8').decode('unicode_escape')  # ‘中文字符’
-        else:
-            Unicode_unicode = Json_list[unicode]
-        char_set.add(Unicode_unicode)
-        if unicode not in char_undict:
-            char_undict[unicode] = Unicode_unicode
+    files = os.listdir(dataset_dir)
+    classname = 'train'
+    for path in files:
+        if classname not in path:
+            classname = 'test'
+        data_dir = os.path.join(dataset_dir, path)
+        counter = 0
+        for image, Unicode in read_from_gntx_dir(gntx_dir=data_dir):
+            # 转化为16进制再转化为unicode字符
+            # Unicode在这里是int型
+            # if(Unicode<0x1000 or Unicode>0xffff):
+            #     continue
+            temp = "\\u" + hex(Unicode)[2:]
+            unicode = hex(Unicode)[2:]  # 十六进制
+            if len(unicode) == 4:
+                Unicode_unicode = temp.encode('utf-8').decode('unicode_escape')  # ‘中文字符’
+            else:
+                Unicode_unicode = Json_list[unicode]
+            #print(temp, unicode, Unicode_unicode)
+            char_set.add(Unicode_unicode)
+            if unicode not in char_undict:
+                char_undict[unicode] = Unicode_unicode
+            
+            im = Image.fromarray(image)
+            # 存放图片的路径
+            img_dir = os.path.join(dataset_dir, classname) + '/' + unicode
 
+            if not os.path.exists(img_dir):
+                os.makedirs(img_dir)
+            im.convert('L').save(img_dir + '/' + str(counter) + '.png')
+            if (counter % 5000 == 0):
+                print("counter=", counter)
+            counter += 1
+        
+        print(classname + "counter = " + str(counter))
+        print(classname + ' transformation finished ...')
+        
     char_list = list(char_set)
     char_dict = dict(zip(sorted(char_list), range(len(char_list))))
-    # print(len(char_dict))
-    # print("char_dict=", char_dict)
-    # print("char_len",len(char_set))
-    print("char_undict=", char_undict)
-    import pickle
+    print("char_dict=", char_dict)
+    print("char_undict = ", char_undict)
+    save_file(char_dict, 'char_dict')
+    save_file(char_undict, 'char_undict')
 
-    f = open('models/char_dict', 'wb')
-    pickle.dump(char_dict, f)
-    f.close()
-    train_counter = 0
-    test_counter = 0
-    for image, Unicode in read_from_gntx_dir(gntx_dir=train_data_dir):
 
-        # if (Unicode < 0x1000 or Unicode > 0xffff):
-        #     continue
-        temp = "\\u" + hex(Unicode)[2:]
-        unicode = hex(Unicode)[2:]  # 十六进制
-        if len(unicode) == 4:
-            Unicode_unicode = temp.encode('utf-8').decode('unicode_escape')  # ‘中文字符’
-        else:
-            Unicode_unicode = Json_list[unicode]
-        im = Image.fromarray(image)
-        # 路径为data文件夹下的子文件夹，train为存放训练集.png的文件夹
-        dir_name = os.path.join(data_dir, 'style1_basic_test') + '/' + Unicode_unicode
-
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-        im.convert('L').save(dir_name + '/' + str(train_counter) + '.png')
-        if (train_counter % 5000 == 0):
-            print("train_counter=", train_counter)
-        train_counter += 1
-    print("train_counter=", train_counter)
-    print('Train transformation finished ...')
-
+gntx_to_png()    
+    
 # 修改文件名，有些文件是乱码，所以设置了unicode码，现在根据修改文件名，把unicode改成汉字
 def change_dir_name(data_dir):
     files = os.listdir(data_dir)
     for names in files:
         if len(names) > 1:
             new_names = Json_list[names]
-            old_file_name = os.path.join(data_dir, names)
-            new_file_name = os.path.join(data_dir, new_names)
-            print(names, ' to ', new_names)
-            os.rename(old_file_name, new_file_name)
+        old_file_name = os.path.join(data_dir, names)
+        new_file_name = os.path.join(data_dir, new_names)
+        print(names, ' to ', new_names)
+        os.rename(old_file_name, new_file_name)
 
-change_dir_name(os.path.join(data_dir,'style1_basic_train_part1'))
-change_dir_name(os.path.join(data_dir,'style1_basic_test'))
+# change_dir_name(os.path.join(data_dir,'style1_basic_train_part1'))
+# change_dir_name(os.path.join(data_dir,'style1_basic_test'))
